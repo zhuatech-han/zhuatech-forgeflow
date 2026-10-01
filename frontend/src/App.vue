@@ -290,13 +290,23 @@ async function navigate(p) {
   await load();
 }
 async function refresh() {
-  catalog.value = await api("/catalog");
-  if (detail.value)
-    detail.value = await api("/orders/" + detail.value.order.id);
-  if (bomDetail.value)
-    bomDetail.value = await api("/boms/" + bomDetail.value.bom.id);
-  await load();
+  try {
+    profile.value = await api("/auth/me");
+    catalog.value = await api("/catalog");
+    if (!profile.value.menus.some((m) => m.code === page.value)) {
+      await navigate(profile.value.menus[0]?.code || "dashboard");
+      return;
+    }
+    if (detail.value)
+      detail.value = await api("/orders/" + detail.value.order.id);
+    if (bomDetail.value)
+      bomDetail.value = await api("/boms/" + bomDetail.value.bom.id);
+    await load();
+  } catch (e) {
+    fail(e);
+  }
 }
+
 async function openOrder(id) {
   try {
     detail.value = await api("/orders/" + id);
